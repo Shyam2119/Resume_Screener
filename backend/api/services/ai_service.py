@@ -1,11 +1,23 @@
 import json
 import logging
 import re
+import time
 from typing import Any
 
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
+
+# Tried in order when the primary model is overloaded (503), rate-limited, or not found.
+_DEFAULT_FALLBACK_MODELS = (
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-2.5-flash",
+)
+
+_MAX_RETRIES = 3
+_RETRY_BASE_DELAY_SEC = 1.0
+_DEFAULT_MODEL = "gemini-2.5-flash"
 
 SKILL_ALIASES: dict[str, str] = {
     "js": "JavaScript",
@@ -139,9 +151,37 @@ def _is_rate_limit(exc: Exception) -> bool:
     )
 
 
+def _is_transient(exc: Exception) -> bool:
+    """True for temporary overload / capacity errors that often succeed on retry."""
+    message = str(exc).lower()
+    return (
+        "503" in message
+        or "unavailable" in message
+        or "high demand" in message
+        or "overloaded" in message
+        or "try again later" in message
+        or "temporarily" in message
+    )
+
+
 def _is_model_not_found(exc: Exception) -> bool:
     message = str(exc).lower()
     return "404" in message or "not_found" in message or "not found" in message
+
+
+def _candidate_models() -> list[str]:
+    primary = (getattr(settings, "GEMINI_MODEL", "") or _DEFAULT_MODEL).strip()
+    configured = getattr(settings, "GEMINI_FALLBACK_MODELS", None)
+    if configured:
+        fallbacks = [m.strip() for m in configured if str(m).strip()]
+    else:
+        fallbacks = list(_DEFAULT_FALLBACK_MODELS)
+
+    models: list[str] = []
+    for model in [primary, *fallbacks]:
+        if model and model not in models:
+            models.append(model)
+    return models
 
 
 def _generate(prompt: str, *, temperature: float = 0.2) -> str:
@@ -151,34 +191,83 @@ def _generate(prompt: str, *, temperature: float = 0.2) -> str:
 
     from google.genai import types
 
-    try:
-        response = client.models.generate_content(
-            model=settings.GEMINI_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=temperature,
-                response_mime_type="application/json",
-            ),
-        )
-        return (response.text or "").strip()
-    except Exception as exc:
-        if _is_rate_limit(exc):
-            logger.warning("Gemini rate limit exceeded")
-            raise AIServiceError(
-                "AI rate limit exceeded. Please try again shortly.",
-                status_code=429,
-            ) from exc
-        if _is_model_not_found(exc):
-            logger.error("Gemini model not found: %s", settings.GEMINI_MODEL)
-            raise AIServiceError(
-                f"Model '{settings.GEMINI_MODEL}' not found. Check GEMINI_MODEL env var.",
-                status_code=404,
-            ) from exc
-        logger.exception("Gemini API error")
+    config = types.GenerateContentConfig(
+        temperature=temperature,
+        response_mime_type="application/json",
+    )
+    models = _candidate_models()
+    last_exc: Exception | None = None
+    saw_rate_limit = False
+
+    for model_index, model in enumerate(models):
+        for attempt in range(_MAX_RETRIES):
+            try:
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=config,
+                )
+                if model != models[0]:
+                    logger.info("Gemini succeeded with fallback model %s", model)
+                return (response.text or "").strip()
+            except Exception as exc:
+                last_exc = exc
+                if _is_rate_limit(exc):
+                    saw_rate_limit = True
+                    if model_index < len(models) - 1:
+                        logger.warning(
+                            "Gemini rate/quota limit on %s; trying next model",
+                            model,
+                        )
+                        break
+                    logger.warning("Gemini rate limit exceeded on all candidate models")
+                    raise AIServiceError(
+                        "AI rate limit exceeded. Please try again shortly.",
+                        status_code=429,
+                    ) from exc
+                if _is_model_not_found(exc):
+                    logger.warning("Gemini model not found: %s; trying next", model)
+                    break
+                if _is_transient(exc) and attempt < _MAX_RETRIES - 1:
+                    delay = _RETRY_BASE_DELAY_SEC * (2**attempt)
+                    logger.warning(
+                        "Gemini %s overloaded (attempt %s/%s); retrying in %.1fs",
+                        model,
+                        attempt + 1,
+                        _MAX_RETRIES,
+                        delay,
+                    )
+                    time.sleep(delay)
+                    continue
+                if _is_transient(exc) and model_index < len(models) - 1:
+                    logger.warning(
+                        "Gemini %s still unavailable; falling back to next model",
+                        model,
+                    )
+                    break
+                logger.exception("Gemini API error (model=%s)", model)
+                raise AIServiceError(
+                    "AI service is temporarily unavailable.",
+                    status_code=503,
+                ) from exc
+
+    if last_exc and _is_model_not_found(last_exc) and not saw_rate_limit:
         raise AIServiceError(
-            "AI service is temporarily unavailable.",
-            status_code=503,
-        ) from exc
+            f"Model '{models[0]}' not found. Check GEMINI_MODEL env var.",
+            status_code=404,
+        ) from last_exc
+
+    if saw_rate_limit:
+        raise AIServiceError(
+            "AI rate limit exceeded. Please try again shortly.",
+            status_code=429,
+        ) from last_exc
+
+    logger.error("Gemini API error after retries", exc_info=last_exc)
+    raise AIServiceError(
+        "AI service is temporarily unavailable.",
+        status_code=503,
+    ) from last_exc
 
 
 def _normalize_skill(skill: str) -> str:

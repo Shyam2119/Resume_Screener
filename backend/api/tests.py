@@ -3,8 +3,10 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from api.services.ai_service import (
+    _candidate_models,
     _dedupe_skills,
     _fallback_extract_skills,
+    _is_transient,
     _normalize_skill,
     compare_skills,
 )
@@ -43,6 +45,27 @@ class FallbackExtractionTests(SimpleTestCase):
         skills = _fallback_extract_skills(text)
         for expected in ["Django", "Python", "TensorFlow", "PyTorch", "Docker", "PostgreSQL", "Next.js", "Angular", "Git"]:
             self.assertIn(expected, skills)
+
+
+class TransientErrorDetectionTests(SimpleTestCase):
+    def test_detects_503_high_demand(self):
+        exc = Exception(
+            "503 UNAVAILABLE. {'error': {'code': 503, 'message': "
+            "'This model is currently experiencing high demand. "
+            "Spikes in demand are usually temporary. Please try again later.', "
+            "'status': 'UNAVAILABLE'}}"
+        )
+        self.assertTrue(_is_transient(exc))
+
+    def test_candidate_models_dedupe_primary(self):
+        with override_settings(
+            GEMINI_MODEL="gemini-2.5-flash",
+            GEMINI_FALLBACK_MODELS=["gemini-2.5-flash", "gemini-2.0-flash"],
+        ):
+            self.assertEqual(
+                _candidate_models(),
+                ["gemini-2.5-flash", "gemini-2.0-flash"],
+            )
 
 
 @override_settings(GEMINI_API_KEY="")
