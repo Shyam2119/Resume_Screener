@@ -134,7 +134,11 @@ def _get_client():
     if not api_key:
         return None
     from google import genai
-    return genai.Client(api_key=api_key)
+    from google.genai import types
+    return genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(timeout=20_000),  # 20 s per request
+    )
 
 
 def _is_rate_limit(exc: Exception) -> bool:
