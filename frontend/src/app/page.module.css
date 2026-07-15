@@ -1,0 +1,242 @@
+/* ─── Main layout ────────────────────────────────────────────────────── */
+.main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 6rem;
+}
+
+/* ─── Hero header ────────────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  animation: slideDown 0.6s ease both;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header > :global(button) {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+
+.logoWrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.aiBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--accent-dim);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: var(--accent-light);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  margin-bottom: 0.25rem;
+  animation: fadeIn 0.8s ease both 0.1s;
+}
+
+.aiBadge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  animation: pulse 2s ease infinite;
+}
+
+.logo {
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #fff 0%, #a78bfa 40%, #6366f1 70%, #818cf8 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite, fadeIn 0.6s ease both;
+  line-height: 1.1;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 400;
+  animation: fadeIn 0.8s ease both 0.2s;
+  letter-spacing: 0.01em;
+}
+
+/* ─── Tabs ───────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+  background: var(--glass);
+  padding: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  backdrop-filter: var(--glass-blur);
+  animation: slideDown 0.6s ease both 0.15s;
+  position: relative;
+}
+
+.tab {
+  padding: 0.6rem 1.6rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  letter-spacing: 0.01em;
+}
+
+.tab:hover {
+  color: var(--text-secondary);
+  background: var(--glass-hover);
+}
+
+.tabActive {
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  color: white;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.tabActive:hover {
+  color: white;
+  background: linear-gradient(135deg, #818cf8, #a78bfa);
+}
+
+.tabBadge {
+  font-size: 0.65rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.tab:not(.tabActive) .tabBadge {
+  background: var(--accent-dim);
+  color: var(--accent-light);
+}
+
+/* ─── Content grid ───────────────────────────────────────────────────── */
+.content {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Results panel ──────────────────────────────────────────────────── */
+.results {
+  min-height: 460px;
+}
+
+/* ─── Error ──────────────────────────────────────────────────────────── */
+.error {
+  background: var(--danger-dim);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--danger);
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  animation: slideDown 0.3s ease;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.error::before {
+  content: '⚠';
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
+/* ─── Placeholder ────────────────────────────────────────────────────── */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2.5rem;
+  background: var(--glass);
+  border: 1px dashed var(--border-bright);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  min-height: 460px;
+  backdrop-filter: var(--glass-blur);
+  animation: fadeIn 0.5s ease;
+  gap: 1.25rem;
+}
+
+.placeholderIcon {
+  font-size: 3.5rem;
+  animation: floatY 3s ease-in-out infinite;
+  filter: grayscale(0.3);
+}
+
+.placeholderTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.placeholder p {
+  max-width: 340px;
+  line-height: 1.8;
+  font-size: 0.9rem;
+}
+
+.placeholderSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.placeholderStep {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  background: var(--glass);
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+.placeholderStep span:first-child {
+  font-size: 0.9rem;
+}

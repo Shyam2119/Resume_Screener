@@ -1,0 +1,122 @@
+.panel {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.75rem;
+  min-height: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  justify-content: center;
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-md);
+  animation: fadeIn 0.3s ease;
+}
+
+/* ─── Shimmer skeleton ───────────────────────────────────────────────── */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skeletonRow {
+  height: 16px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--border) 25%,
+    var(--border-bright) 50%,
+    var(--border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease infinite;
+}
+
+/* ─── Progress bar ───────────────────────────────────────────────────── */
+.progressTrack {
+  height: 4px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #a78bfa, var(--success));
+  background-size: 200% 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+  animation: shimmer 2s linear infinite;
+}
+
+/* ─── Steps ──────────────────────────────────────────────────────────── */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.stepDone {
+  color: var(--success);
+  opacity: 0.75;
+  background: var(--success-dim);
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+.stepActive {
+  color: var(--text);
+  background: var(--accent-dim);
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+}
+
+.stepPending {
+  color: var(--text-muted);
+  opacity: 0.4;
+}
+
+.stepIcon {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.stepLabel {
+  flex: 1;
+  font-weight: 500;
+}
+
+/* Animated dots for active step */
+.stepDots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.stepDots::before {
+  content: '●●●';
+  letter-spacing: 2px;
+  font-size: 0.5rem;
+  color: var(--accent-light);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* ─── Hint ───────────────────────────────────────────────────────────── */
+.hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: -0.5rem;
+}

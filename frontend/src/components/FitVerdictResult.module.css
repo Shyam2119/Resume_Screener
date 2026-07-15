@@ -1,0 +1,209 @@
+/* ─── Card ───────────────────────────────────────────────────────────── */
+.card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-md);
+  animation: scaleIn 0.4s ease both;
+}
+
+/* ─── Card header ────────────────────────────────────────────────────── */
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.cardTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.fallbackPill {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  background: var(--warning-dim);
+  border: 1px solid rgba(245,158,11,0.25);
+  color: var(--warning);
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.actionBtn {
+  padding: 0.35rem 0.8rem;
+  background: var(--glass);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.actionBtn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* ─── Verdict section ────────────────────────────────────────────────── */
+.verdictSection {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+.verdictBadge {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem 2.5rem;
+  border: 2px solid;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.02);
+  transition: box-shadow 0.3s ease;
+  animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both 0.1s;
+}
+
+[data-theme="light"] .verdictBadge {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.verdictIcon {
+  font-size: 2.5rem;
+  animation: floatY 3s ease-in-out infinite;
+}
+
+.verdictInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.verdictText {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.verdictDesc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ─── Reasons ────────────────────────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.sectionTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.reasons {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.reason {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  opacity: 0;
+}
+
+.reasonNumber {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: white;
+  margin-top: 0.15rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.reasonText {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+/* ─── Verdict legend ─────────────────────────────────────────────────── */
+.verdictLegend {
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  transition: all 0.2s;
+}
+
+.legendActive {
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ─── Verdict bg tints ───────────────────────────────────────────────── */
+.success .verdictBadge { background: rgba(16, 185, 129, 0.04); }
+.warning .verdictBadge { background: rgba(245, 158, 11, 0.04); }
+.danger  .verdictBadge { background: rgba(239,  68,  68, 0.04); }
+
+/* ─── Print ──────────────────────────────────────────────────────────── */
+@media print {
+  .card {
+    border: 1px solid #ccc;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+  .actions, .verdictLegend { display: none; }
+}
