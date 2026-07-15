@@ -126,8 +126,22 @@ def _get_client():
 
 
 def _is_rate_limit(exc: Exception) -> bool:
+    """True only for genuine quota/rate-limit errors (HTTP 429 / RESOURCE_EXHAUSTED)."""
     message = str(exc).lower()
-    return "429" in message or "quota" in message or "rate" in message
+    # Must be specific — avoid false positives from words like "generateContent"
+    return (
+        "429" in message
+        or "resource_exhausted" in message
+        or "quota_exceeded" in message
+        or "quota exceeded" in message
+        or "too many requests" in message
+        or "retry_delay" in message
+    )
+
+
+def _is_model_not_found(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return "404" in message or "not_found" in message or "not found" in message
 
 
 def _generate(prompt: str, *, temperature: float = 0.2) -> str:
@@ -153,6 +167,12 @@ def _generate(prompt: str, *, temperature: float = 0.2) -> str:
             raise AIServiceError(
                 "AI rate limit exceeded. Please try again shortly.",
                 status_code=429,
+            ) from exc
+        if _is_model_not_found(exc):
+            logger.error("Gemini model not found: %s", settings.GEMINI_MODEL)
+            raise AIServiceError(
+                f"Model '{settings.GEMINI_MODEL}' not found. Check GEMINI_MODEL env var.",
+                status_code=404,
             ) from exc
         logger.exception("Gemini API error")
         raise AIServiceError(
