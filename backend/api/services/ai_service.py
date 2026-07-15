@@ -117,15 +117,12 @@ def is_ai_configured() -> bool:
     return key.lower() not in placeholders
 
 
-def _get_model():
-    api_key = settings.GEMINI_API_KEY
+def _get_client():
+    api_key = (settings.GEMINI_API_KEY or "").strip()
     if not api_key:
         return None
-
-    import google.generativeai as genai
-
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel(settings.GEMINI_MODEL)
+    from google import genai
+    return genai.Client(api_key=api_key)
 
 
 def _is_rate_limit(exc: Exception) -> bool:
@@ -134,24 +131,20 @@ def _is_rate_limit(exc: Exception) -> bool:
 
 
 def _generate(prompt: str, *, temperature: float = 0.2) -> str:
-    model = _get_model()
-    if not model:
+    client = _get_client()
+    if not client:
         raise AIServiceError("Gemini API key is not configured.", status_code=503)
 
+    from google.genai import types
+
     try:
-        # Fail fast: Google's default retry can hang 20-50s on free-tier 429s
-        # and cause browser ERR_CONNECTION_RESET.
-        from google.api_core import retry as gcp_retry
-
-        no_retry = gcp_retry.Retry(predicate=lambda _: False, deadline=20)
-
-        response = model.generate_content(
-            prompt,
-            generation_config={
-                "temperature": temperature,
-                "response_mime_type": "application/json",
-            },
-            request_options={"retry": no_retry, "timeout": 20},
+        response = client.models.generate_content(
+            model=settings.GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=temperature,
+                response_mime_type="application/json",
+            ),
         )
         return (response.text or "").strip()
     except Exception as exc:
