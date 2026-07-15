@@ -160,6 +160,9 @@ def _is_transient(exc: Exception) -> bool:
     message = str(exc).lower()
     return (
         "503" in message
+        or "504" in message
+        or "deadline_exceeded" in message
+        or "deadline exceeded" in message
         or "unavailable" in message
         or "high demand" in message
         or "overloaded" in message
