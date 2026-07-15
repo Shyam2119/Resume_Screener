@@ -8,16 +8,15 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-# Tried in order when the primary model is overloaded (503), rate-limited, or not found.
-_DEFAULT_FALLBACK_MODELS = (
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-2.5-flash",
-)
+# Tried in order when the primary model is overloaded or rate-limited.
+# gemini-2.5-flash and gemini-2.0-flash are NOT available on new free-tier projects.
+# Only gemini-3.5-flash is confirmed to work. No fallback by default — fail fast.
+_DEFAULT_FALLBACK_MODELS: tuple[str, ...] = ()
 
-_MAX_RETRIES = 3
+# Only retry ONCE on transient errors — each retry costs a quota request on free tier.
+_MAX_RETRIES = 1
 _RETRY_BASE_DELAY_SEC = 1.0
-_DEFAULT_MODEL = "gemini-2.5-flash"
+_DEFAULT_MODEL = "gemini-3.5-flash"
 
 SKILL_ALIASES: dict[str, str] = {
     "js": "JavaScript",

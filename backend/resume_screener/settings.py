@@ -99,14 +99,11 @@ REST_FRAMEWORK = {
 }
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-# Prefer 2.5 Flash — free tier is shared per model; 3.5 Flash hits 20 RPD quickly
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-# Comma-separated alternate models when the primary returns 429 / 503 / not found
+# gemini-3.5-flash is the only model confirmed available on new free-tier projects.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+# Leave empty by default — set via env var if you have other models available.
 GEMINI_FALLBACK_MODELS = [
     m.strip()
-    for m in os.getenv(
-        "GEMINI_FALLBACK_MODELS",
-        "gemini-2.0-flash,gemini-2.0-flash-lite",
-    ).split(",")
+    for m in os.getenv("GEMINI_FALLBACK_MODELS", "").split(",")
     if m.strip()
 ]
