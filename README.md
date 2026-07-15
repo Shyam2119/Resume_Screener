@@ -1,64 +1,81 @@
-# Resume Screener
+# Resume Screener — AI-Powered Skills Analysis
 
-A single full-stack application with two AI-powered features for comparing a candidate's resume against a job description:
+A full-stack AI application that compares a candidate's resume against a job description and delivers instant, structured feedback in two complementary views.
 
-1. **Skill Gap Checker** — extracts skills from both inputs, shows matched/missing skills, a visual donut chart, and match percentage
-2. **Fit Verdict** — provides a hiring verdict (Qualified / Almost There / Not Yet) with three AI-generated supporting reasons
+**🔗 Live Demo:** [resume-screener-drab.vercel.app](https://resume-screener-drab.vercel.app)
 
-Built for the Techotlist Connects LLP Full Stack Developer take-home assignment.
+---
+
+## Features
+
+| Feature | Description |
+|---|---|
+| 🎯 **Skill Gap Checker** | Extracts skills from both inputs, shows matched / missing / bonus skills with an animated donut chart and match percentage |
+| 🏆 **Fit Verdict** | AI hiring verdict — *Qualified / Almost There / Not Yet* — backed by three specific, evidence-based reasons |
+| 📎 **PDF / DOCX Upload** | Drag-and-drop or click-to-browse file parsing for resume and job description |
+| 🔗 **Share Results** | One-click copy of a shareable URL (results base64-encoded in the hash — no server storage needed) |
+| 📄 **Export as PDF** | Browser print dialog renders a clean, print-optimised report |
+| ☀️ **Dark / Light Mode** | Toggle persisted to `localStorage` |
+| ⚡ **Graceful Fallback** | If Gemini is unavailable or rate-limited, keyword extraction and rule-based verdict keep the app fully functional — clearly indicated by a badge in the UI |
+| 🔄 **Stale Detection** | Banner prompts re-analysis when inputs change after a result is shown |
+
+---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
-| Frontend | Next.js 15, React 19, TypeScript |
-| Backend | Django 5, Django REST Framework |
-| AI | Google Gemini API (gemini-2.0-flash) |
-| File Parsing | PyPDF2, python-docx |
-| Containerization | Docker, Docker Compose |
+|---|---|
+| **Frontend** | Next.js 15, React 19, TypeScript, Vanilla CSS |
+| **Backend** | Django 5.2, Django REST Framework |
+| **AI** | Google Gemini API via `google-genai` SDK |
+| **Primary model** | `gemini-3.5-flash` |
+| **Fallback models** | `gemini-3.1-flash-lite` → keyword mode |
+| **File Parsing** | PyPDF2, python-docx |
+| **Containerisation** | Docker, Docker Compose |
+| **Hosting** | Vercel (frontend) + Render (backend) |
 
-## Features
-
-- 📎 **PDF / DOCX Upload** — drag-and-drop or click-to-browse for both resume and job description fields; text auto-replaces any pre-filled content
-- 📊 **Visual Donut Chart** — animated SVG breakdown of matched vs missing skills
-- 🔗 **Share Results** — one-click copy of a shareable link (results encoded in URL hash)
-- 📄 **Export as PDF** — browser print dialog renders a clean report
-- ☀️ **Dark / Light Mode** — toggle in the top-right corner, persisted to localStorage
-- ⚡ **Keyword Fallback** — app works even without a Gemini API key (rule-based extraction)
-- ✅ **Stale Detection** — banner appears when inputs change after an analysis
+---
 
 ## Architecture
 
 ```
-┌─────────────────┐     REST API      ┌─────────────────┐
-│  Next.js UI     │ ────────────────► │  Django Backend │
-│  (Port 3000)    │                   │  (Port 8000)    │
-└─────────────────┘                   └────────┬────────┘
-                                               │
-                                               ▼
-                                      ┌─────────────────┐
-                                      │  Gemini API     │
-                                      │  (skill extract │
-                                      │   & verdict)    │
-                                      └─────────────────┘
+┌──────────────────────┐      REST API      ┌──────────────────────┐
+│   Next.js Frontend   │ ─────────────────► │   Django Backend     │
+│   Vercel             │                    │   Render             │
+└──────────────────────┘                    └──────────┬───────────┘
+                                                       │
+                                                       ▼
+                                            ┌──────────────────────┐
+                                            │   Google Gemini API  │
+                                            │   (skill extract +   │
+                                            │    fit verdict)      │
+                                            └──────────────────────┘
 ```
+
+**Single-request design:** The frontend calls `/api/analyze/` once per click, which runs skill-gap extraction and fit-verdict generation in a single Gemini prompt. This halves free-tier quota usage compared to two separate calls.
+
+**Model rotation:** `ai_service.py` tries models in priority order (`GEMINI_MODEL` → `GEMINI_FALLBACK_MODELS`) and downgrades to keyword mode only when all fail.
+
+---
 
 ## Prerequisites
 
 - Python 3.12+
 - Node.js 20+
-- Gemini API key ([aistudio.google.com/apikey](https://aistudio.google.com/apikey))
+- Gemini API key — [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 - (Optional) Docker & Docker Compose
+
+---
 
 ## Quick Start (Local)
 
-### 1. Clone and configure environment
+### 1. Clone & configure
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Shyam2119/Resume_Screener.git
 cd Resume_Screener
 cp .env.example .env
-# Edit .env and set your GEMINI_API_KEY
+# Open .env and set GEMINI_API_KEY
 ```
 
 ### 2. Start the backend
@@ -69,8 +86,7 @@ python -m venv .venv
 
 # Windows
 .venv\Scripts\activate
-
-# macOS/Linux
+# macOS / Linux
 source .venv/bin/activate
 
 pip install -r requirements.txt
@@ -78,7 +94,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Backend runs at **http://localhost:8000**
+Backend available at **http://localhost:8000**
 
 ### 3. Start the frontend
 
@@ -90,7 +106,9 @@ npm install
 npm run dev
 ```
 
-Frontend runs at **http://localhost:3000**
+Frontend available at **http://localhost:3000**
+
+---
 
 ## Docker
 
@@ -101,50 +119,106 @@ cp .env.example .env
 docker compose up --build
 ```
 
-- Frontend: http://localhost:3000
-- Backend: http://localhost:8000
-- Health check: http://localhost:8000/api/health/
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend | http://localhost:8000 |
+| Health check | http://localhost:8000/api/health/ |
 
-## API Endpoints
+---
 
-### POST `/api/skill-gap/`
+## Deployment
+
+### Backend — Render
+
+1. Create a new **Web Service** on [render.com](https://render.com), pointing to the `backend/` directory.
+2. Set **Dockerfile path** to `backend/Dockerfile`.
+3. Add the following environment variables:
+
+| Variable | Example Value | Notes |
+|---|---|---|
+| `GEMINI_API_KEY` | `AIzaSy...` | From AI Studio |
+| `GEMINI_MODEL` | `gemini-3.5-flash` | Primary model |
+| `GEMINI_FALLBACK_MODELS` | `gemini-3.1-flash-lite` | Comma-separated fallbacks |
+| `DJANGO_SECRET_KEY` | *(random 50-char string)* | Keep secret |
+| `ALLOWED_HOSTS` | `your-service.onrender.com` | |
+| `CORS_ALLOWED_ORIGINS` | `https://your-frontend.vercel.app` | |
+
+### Frontend — Vercel
+
+1. Import the repository on [vercel.com](https://vercel.com).
+2. Set **Root Directory** to `frontend`.
+3. Add environment variable:
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | `https://your-service.onrender.com` |
+
+---
+
+## Environment Variables
+
+### Backend (`.env`)
+
+```env
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-3.5-flash
+GEMINI_FALLBACK_MODELS=gemini-3.1-flash-lite
+DJANGO_SECRET_KEY=change-me-in-production
+DEBUG=False
+ALLOWED_HOSTS=localhost,127.0.0.1
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+```
+
+### Frontend (`.env.local`)
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+---
+
+## API Reference
+
+### `POST /api/analyze/`
+
+Runs skill-gap and fit-verdict in a single request (recommended — conserves API quota).
 
 **Request:**
 ```json
 {
-  "resume": "React, JavaScript, TypeScript, Redux...",
-  "job_description": "React, TypeScript, Redux, AWS, Docker..."
+  "resume": "Shyam Pattipu — Full Stack Developer\nSkills: React, TypeScript ...",
+  "job_description": "Full Stack Developer\nRequired: React, TypeScript, AWS ..."
 }
 ```
 
 **Response:**
 ```json
 {
-  "matched_skills": ["React", "TypeScript", "Redux"],
-  "missing_skills": ["AWS", "Docker"],
-  "extra_skills": ["JavaScript", "HTML", "CSS"],
-  "match_percentage": 60,
-  "resume_skills": ["React", "JavaScript", "TypeScript", "Redux", "HTML", "CSS"],
-  "jd_skills": ["React", "TypeScript", "Redux", "AWS", "Docker"],
-  "ai_powered": true
+  "skill_gap": {
+    "matched_skills": ["React", "TypeScript", "Redux"],
+    "missing_skills": ["AWS", "Docker"],
+    "extra_skills": ["HTML", "CSS", "Node.js"],
+    "match_percentage": 60,
+    "resume_skills": ["React", "TypeScript", "Redux", "HTML", "CSS", "Node.js"],
+    "jd_skills": ["React", "TypeScript", "Redux", "AWS", "Docker"],
+    "ai_powered": true
+  },
+  "fit_verdict": {
+    "verdict": "Almost There",
+    "reasons": [
+      "Strong match on React, TypeScript, and Redux.",
+      "Missing cloud and containerisation experience (AWS, Docker).",
+      "Covers all identified required core skills."
+    ],
+    "ai_powered": true
+  }
 }
 ```
 
-### POST `/api/analyze/`
+### `POST /api/parse-file/`
 
-Runs both skill-gap and fit-verdict in a single request (used by the frontend to reduce API quota usage).
-
-**Response:**
-```json
-{
-  "skill_gap": { "...": "..." },
-  "fit_verdict": { "...": "..." }
-}
-```
-
-### POST `/api/parse-file/`
-
-Accepts a `multipart/form-data` upload with a `file` field (PDF or DOCX, max 5 MB). Returns extracted plain text.
+Accepts `multipart/form-data` with a `file` field (PDF or DOCX, max 5 MB).
 
 **Response:**
 ```json
@@ -155,57 +229,17 @@ Accepts a `multipart/form-data` upload with a `file` field (PDF or DOCX, max 5 M
 }
 ```
 
-### POST `/api/fit-verdict/`
+### `GET /api/health/`
 
-**Request:** Same as skill-gap.
-
-**Response:**
-```json
-{
-  "verdict": "Almost There",
-  "reasons": [
-    "Strong experience in React, TypeScript, and Redux.",
-    "Good match for the required frontend technologies.",
-    "Missing experience with AWS and Docker."
-  ],
-  "ai_powered": true
-}
-```
-
-### GET `/api/health/`
-
-Returns service status and AI configuration.
-
-**Response:**
 ```json
 {
   "status": "ok",
   "ai_configured": true,
-  "model": "gemini-2.0-flash"
+  "model": "gemini-3.5-flash"
 }
 ```
 
-## Assumptions
-
-- Users can paste plain text **or** upload a PDF/DOCX (up to 5 MB) for resume and job description
-- Skill extraction and verdict generation are powered by Google Gemini; a keyword-based fallback runs if `GEMINI_API_KEY` is not set (useful for local demo without API costs)
-- Match percentage is calculated as `(matched JD skills / total JD skills) × 100`
-- `extra_skills` shows resume skills not required by the JD (bonus strengths)
-- One "Analyze" action runs both features via `/api/analyze/` to conserve free-tier quota
-- Verdict thresholds in fallback mode: ≥75% Qualified, ≥45% Almost There, else Not Yet
-- Share link encodes results as base64 in the URL hash (no server-side storage needed)
-
-## Trade-offs
-
-| Decision | Rationale |
-|----------|-----------|
-| Gemini over self-hosted ML | Faster to implement, better NLP for unstructured text; aligns with assignment's AI integration requirement |
-| SQLite over PostgreSQL | Zero-config for reviewers; easy to swap to PostgreSQL via Django settings for production |
-| PDF/DOCX text extraction over OCR | PyPDF2/python-docx handle digital PDFs well; OCR (e.g. Tesseract) would add significant complexity for scanned documents |
-| Single-page tabs vs separate routes | Keeps both features in one app as confirmed by hiring team; shared input state between tabs avoids re-uploading files |
-| Fallback extraction | Ensures app works during demo even if API key is missing or rate-limited; clearly indicated in UI |
-| Share via URL hash | Stateless — no database required; works offline; reviewer can open results without running the backend |
-| window.print() for export | Zero dependencies; produces a clean PDF via any browser's print dialog |
+---
 
 ## Project Structure
 
@@ -214,36 +248,54 @@ Resume_Screener/
 ├── backend/
 │   ├── api/
 │   │   ├── services/
-│   │   │   ├── ai_service.py    # AI skill extraction, comparison, verdict
-│   │   │   └── file_parser.py   # PDF & DOCX text extraction
-│   │   ├── views.py             # REST endpoints
-│   │   ├── serializers.py       # Input validation
+│   │   │   ├── ai_service.py      # Gemini integration, fallback logic, model rotation
+│   │   │   └── file_parser.py     # PDF & DOCX text extraction
+│   │   ├── views.py               # REST endpoints
+│   │   ├── serializers.py         # Input validation
 │   │   └── urls.py
-│   ├── resume_screener/         # Django settings
-│   ├── manage.py
+│   ├── resume_screener/
+│   │   └── settings.py            # Django + Gemini model config
+│   ├── Dockerfile
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── app/                 # Next.js pages & global styles
-│   │   ├── components/          # UI components
-│   │   │   ├── InputPanel.tsx       # Text + file upload inputs
-│   │   │   ├── SkillGapResult.tsx   # Chart, tags, share/export
-│   │   │   ├── FitVerdictResult.tsx # Verdict badge, reasons
-│   │   │   ├── LoadingPanel.tsx     # Multi-step animated loader
-│   │   │   └── ThemeToggle.tsx      # Dark/light mode switch
-│   │   └── lib/
-│   │       ├── api.ts           # API client (fetch wrappers)
-│   │       └── theme.tsx        # Theme context & provider
+│   │   ├── app/                   # Next.js App Router pages & global CSS
+│   │   └── components/
+│   │       ├── InputPanel.tsx         # Text + file upload inputs
+│   │       ├── SkillGapResult.tsx     # Donut chart, skill tags, share/export
+│   │       ├── FitVerdictResult.tsx   # Verdict badge & reasons
+│   │       ├── LoadingPanel.tsx       # Multi-step animated loader
+│   │       └── ThemeToggle.tsx        # Dark/light mode switch
 │   └── package.json
 ├── docker-compose.yml
 ├── .env.example
 └── README.md
 ```
 
+---
+
+## Assumptions & Design Decisions
+
+| Decision | Rationale |
+|---|---|
+| **Single `/api/analyze/` call** | Halves Gemini API quota usage — skill-gap and verdict extracted in one prompt |
+| **Model rotation fallback** | Tries models in order; falls to keyword mode only when all fail — maximises AI uptime on free tier |
+| **`google-genai` SDK** | Google's official, actively maintained SDK; replaces the deprecated `google-generativeai` package |
+| **Gemini over self-hosted ML** | Better NLP for unstructured resume text with zero infrastructure |
+| **SQLite over PostgreSQL** | Zero-config for reviewers; trivial to swap via `DATABASE_URL` in production |
+| **PyPDF2/python-docx over OCR** | Handles digital PDFs cleanly; Tesseract would add Docker image size for marginal gain |
+| **Single-page tabs vs separate routes** | Shared input state avoids re-uploading files when switching between Skill Gap and Fit Verdict |
+| **Share via URL hash** | Stateless — no database required; works offline; reviewer opens results without running the backend |
+| **`window.print()` for PDF export** | Zero client-side dependencies; clean print layout via any browser |
+
+---
+
 ## Author
 
-Shyam Pattipu
+**Shyam Pattipu**
 
 ## License
 
 MIT
+
+
